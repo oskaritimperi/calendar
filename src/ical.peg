@@ -1,0 +1,125 @@
+/*
+ * PEG.js grammar for iCal (http://tools.ietf.org/html/rfc5545).
+ * Does not understand folds. They must be taken care of before
+ * using the parser generated from this grammar.
+ */
+
+start
+  = ContentLineList
+  / "" { return []; }
+
+ContentLineList
+  = head:ContentLine tail:(LineEnd ContentLine)* {
+    var result = [head], i = 0;
+    for (; i < tail.length; ++i) result.push(tail[i][1]);
+    return result;
+  }
+
+ContentLine
+  = name:Name params:(";" Param)* ":" value:Value {
+    var par = [], i = 0;
+    for (i = 0; i < params.length; ++i) par.push(params[i][1]);
+    return {name:name, params:par, value:value};
+  }
+
+Name
+  = XName
+  / IANAToken
+
+IANAToken
+  = token:([A-Za-z0-9-]+) { return token.join(""); }
+
+XName
+  = x:"X-" vendor:(VendorID "-")? tok:[A-Za-z0-9-]+ { return x + vendor + tok.join(""); }
+
+VendorID
+  = [A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]
+
+Param
+  = name:ParamName "=" params:ParamValueList {
+    return {name:name, values:params};
+  }
+
+ParamValueList
+  = head:ParamValue tail:("," ParamValue)* {
+    var result = [head];
+    var i = 0;
+    for (i = 0; i < tail.length; ++i) result.push(tail[i][1]);
+    return result;
+  }
+
+ParamName "ParamName"
+  = XName
+  / IANAToken
+
+ParamValue "ParamValue"
+  = QuotedString / ParamText
+
+ParamText "ParamText"
+  = chars:SAFE_CHAR* { return chars.join(""); }
+
+Value "Value"
+  = chars:VALUE_CHAR* { return chars.join(""); }
+
+QuotedString "QuotedString"
+  = '"' chars:QSAFE_CHAR* '"' { return '"' + chars.join("") + '"'; }
+
+QSAFE_CHAR "QSAFE_CHAR"
+  = [ \t\x21\x23-\x7E]
+  / NON_US_ASCII
+
+SAFE_CHAR "SAFE_CHAR"
+  = [ \t\x21\x23-\x2B\x2D-\x39\x3C-\x7E]
+  / NON_US_ASCII
+
+VALUE_CHAR "VALUE_CHAR"
+  = [ \t\x21-\x7E]
+  / NON_US_ASCII
+
+NON_US_ASCII
+  = UTF8_2
+  / UTF8_3
+  / UTF8_4
+
+LineEnd "LineEnd"
+  = CR LF
+  / LF
+
+CR "CR"
+  = "\r"
+
+LF "LF"
+  = "\n"
+
+
+UTF8_Octets
+  = UTF8_Char*
+
+UTF8_Char
+  = UTF8_1
+  / UTF8_2
+  / UTF8_3
+  / UTF8_4
+
+UTF8_1
+  = [\x00-\x7F]
+
+UTF8_2
+  = [\xC2-\xDF] UTF8_Tail
+
+UTF8_3
+  = "\xE0" [\xA0-\xBF] UTF8_Tail
+  / [\xE1-\xEC] UTF8_Tail2
+  / "\xED" [\x80-\x9F] UTF8_Tail
+  / [\xEE-\xEF] UTF8_Tail2
+
+UTF8_4
+  = "\xF0" [\x90-\xBF] UTF8_Tail2
+  / [\xF1-\xF3] UTF8_Tail2 UTF8_Tail
+  / "\xF4" [\x80-\x8F] UTF8_Tail2
+
+UTF8_Tail
+  = [\x80-\xBF]
+
+UTF8_Tail2
+  = UTF8_Tail UTF8_Tail
