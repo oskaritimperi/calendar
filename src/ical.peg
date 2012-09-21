@@ -36,10 +36,16 @@ IANAToken
   = token:([A-Za-z0-9-]+) { return token.join(""); }
 
 XName
-  = x:"X-" vendor:(VendorID "-")? tok:[A-Za-z0-9-]+ { return x + vendor + tok.join(""); }
+  = x:"X-" vendor:(VendorID "-")? tok:[A-Za-z0-9-]+ {
+    if (vendor !== null) vendor = vendor[0] + '-';
+    else vendor = '';
+    return x + vendor + tok.join("");
+  }
 
 VendorID
-  = [A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]
+  = chars:[A-Za-z0-9]+ {
+    return chars.join("");
+  }
 
 Param
   = name:ParamName "=" params:ParamValueList {
