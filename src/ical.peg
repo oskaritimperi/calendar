@@ -1,8 +1,14 @@
 /*
  * PEG.js grammar for iCal (http://tools.ietf.org/html/rfc5545).
- * Does not understand folds. They must be taken care of before
- * using the parser generated from this grammar.
  */
+
+{
+    var foldRe = /[\n][ \t]/g;
+    
+    while (foldRe.test(input)) {
+        input = input.replace(foldRe, '');
+    }
+}
 
 start
   = ContentLineList
