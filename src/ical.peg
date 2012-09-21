@@ -76,22 +76,24 @@ Value "Value"
 QuotedString "QuotedString"
   = '"' chars:QSAFE_CHAR* '"' { return '"' + chars.join("") + '"'; }
 
+// Not double quote or CONTROL
 QSAFE_CHAR "QSAFE_CHAR"
-  = [ \t\x21\x23-\x7E]
-  / NON_US_ASCII
+  = [^"\x00-\x08\x0A-\x1F\x7F]
 
+// Any but double quote, control, ;, :, ,
 SAFE_CHAR "SAFE_CHAR"
-  = [ \t\x21\x23-\x2B\x2D-\x39\x3C-\x7E]
-  / NON_US_ASCII
+  = [^"\x00-\x08\x0A-\x1F\x7F;:,]
 
 VALUE_CHAR "VALUE_CHAR"
-  = [ \t\x21-\x7E]
-  / NON_US_ASCII
+  = [^\x00-\x08\x0A-\x1F\x7F]
 
 NON_US_ASCII
   = UTF8_2
   / UTF8_3
   / UTF8_4
+
+CONTROL
+  = [\x00-\x08\x0A-\x1F\x7F]
 
 LineEnd "LineEnd"
   = CR LF
